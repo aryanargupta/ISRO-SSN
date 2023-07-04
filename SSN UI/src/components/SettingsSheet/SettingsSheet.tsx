@@ -2,6 +2,8 @@ import { IonCheckbox, IonContent, IonModal, IonSearchbar } from "@ionic/react";
 import { Coordinate, toStringXY } from "ol/coordinate";
 import { useContext, useRef } from "react";
 import { MapContext } from "../../store/MapContext";
+// import { selectedPoints } from '../../components/Map/Map';
+import { selectedPointsArray } from "../../components/Map/Map";
 
 const SettingsSheet = () => {
   const modal = useRef<HTMLIonModalElement>(null);
@@ -84,8 +86,13 @@ const SettingsSheet = () => {
             <input
               type="text"
               placeholder="Source Coordinates"
-              onChange={(e) => {
-                setSource(e.target.value);
+              onChange={() => {
+                // e.target.value=selectedPointsArray[0].join(', ');
+                // console.log(e.target.value);
+                // setSource(e.target.value);
+                // console.log(selectedPoints);
+                setSource(selectedPointsArray[0].join(', '));
+                // console.log(source);
               }}
               className="input"
               disabled={layerLoading}
@@ -93,8 +100,11 @@ const SettingsSheet = () => {
             <input
               type="text"
               placeholder="Destination Coordinates"
-              onChange={(e) => {
-                setDestination(e.target.value);
+              onChange={() => {
+                // e.target.value=selectedPointsArray[0].join(', ');
+                // setDestination(e.target.value);
+                // console.log(selectedPoints);
+                setDestination(selectedPointsArray[1].join(', '));
               }}
               className="input"
               disabled={layerLoading}

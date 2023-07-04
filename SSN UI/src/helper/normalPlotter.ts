@@ -15,8 +15,9 @@ export const plotPointsIndividually = async (
 ) => {
   setLoading(true);
   const SRC_COORDINATES = source.split(", ");
+  
   const DEST_COORDINATES = destination.split(", ");
-
+  
   const res = await axiosInstance.post("http://localhost:8080/stream-path", {
     source_coords: [parseInt(SRC_COORDINATES[0]), parseInt(SRC_COORDINATES[1])],
     destination_coords: [
@@ -26,8 +27,14 @@ export const plotPointsIndividually = async (
     gtype: "full",
     ntype: 1,
   });
-  const points = res.data;
+  const points = res.data.args;
+  console.log('src'+typeof SRC_COORDINATES);
+  console.log('dest'+DEST_COORDINATES);
   
+  // console.log(source);
+  // console.log(destination);
+  console.log('points: '+points);
+  console.log(res.data.args);
   points.forEach((point: number[]) => {
     const pointFeature = new Feature({
       geometry: new Point(fromLonLat([point[1], point[0]])),

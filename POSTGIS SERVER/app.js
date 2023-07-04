@@ -40,7 +40,7 @@ pool.connect((err, client, release) => {
 app.get("/load-data", (req, res) => {
   // TODO -> ONLY SUPPORTING WEATHER FEATURE
   readFileAndDump(
-    "C:\\Users\\ddave\\OneDrive\\Desktop\\ISRO SSN\\ISRO PostGIS Backend\\weather.csv",
+    "weather.csv",
     pool
   );
   res.send("Loaded successfully 😀");

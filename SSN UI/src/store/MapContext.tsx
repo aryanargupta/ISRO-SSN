@@ -1,5 +1,5 @@
 import React, { LegacyRef, createContext } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState,useContext } from "react";
 import GeoJSON from "ol/format/GeoJSON";
 import { Coordinate } from "ol/coordinate";
 import Overlay from "ol/Overlay";
@@ -18,6 +18,11 @@ import { OSM } from "ol/source";
 import { Fill, Style } from "ol/style";
 import { fromLonLat } from "ol/proj";
 import bathymetryLayerGenerator from "../layers/bathymetry/bathymetry_layer_generator";
+import { Pixel } from "ol/pixel";
+// import { pointPlotter } from "../helper/pointPlotter";
+// import  selectedPoints  from '../components/Map/Map';
+import { selectedPointsArray } from "../components/Map/Map";
+
 
 interface IMapContextType {
   map: ol.Map | undefined;
@@ -29,6 +34,8 @@ interface IMapContextType {
   begin: boolean;
   setBegin: React.Dispatch<React.SetStateAction<boolean>>;
   mapElement: React.MutableRefObject<HTMLElement | undefined>;
+  
+  getClickedPixelCoordinates: (event: any) => void;
   handleMapClick: (event: any) => void;
   popup: Overlay;
   layerLoading: boolean;
@@ -43,6 +50,7 @@ interface IMapContextType {
   setDestination: React.Dispatch<React.SetStateAction<string | undefined>>;
   handleSearch: () => Promise<void>;
   handlePathGenerator: () => Promise<void>;
+
   showWind: boolean;
   setShowWind: React.Dispatch<React.SetStateAction<boolean>>;
   showBathymetry: boolean;
@@ -76,23 +84,27 @@ export const MapContext = createContext<IMapContextType>({
   featuresLayer: undefined,
   showBathymetry: false,
   layerModalIsOpen: false,
-  setMap: () => {},
-  setBegin: () => {},
-  setSource: () => {},
-  setFeatures: () => {},
-  setShowWind: () => {},
-  setIsSearched: () => {},
-  handleMapClick: () => {},
-  setDestination: () => {},
-  setIsLoadingMap: () => {},
-  setLayerLoading: () => {},
-  setFeaturesLayer: () => {},
-  setSelectedCoord: () => {},
-  setShowBathymetry: () => {},
-  setLayerModalIsOpen: () => {},
-  handleRemoveCurrentRoute: () => {},
+  setMap: () => { },
+  setBegin: () => { },
+  setSource: () => { },
+  setFeatures: () => { },
+  setShowWind: () => { },
+  setIsSearched: () => { },
+  handleMapClick: () => { },
+  setDestination: () => { },
+  setIsLoadingMap: () => { },
+  setLayerLoading: () => { },
+  setFeaturesLayer: () => { },
+  setSelectedCoord: () => { },
+  setShowBathymetry: () => { },
+  setLayerModalIsOpen: () => { },
+  // getClickedPixelCoordinates: () => { },
+  handleRemoveCurrentRoute: () => { },
   handleSearch: () => Promise.resolve(),
   handlePathGenerator: () => Promise.resolve(),
+  getClickedPixelCoordinates: function (event: any): void {
+    throw new Error("Function not implemented.");
+  }
 });
 
 interface IMapProviderProps {
@@ -109,7 +121,7 @@ const MapProvider = ({ children }: IMapProviderProps) => {
   const [isLoadingMap, setIsLoadingMap] = useState<boolean>(true);
   const [layerModalIsOpen, setLayerModalIsOpen] = useState<boolean>(false);
 
-  const [source, setSource] = useState<any>();
+  const [source, setSource] = useState<any>('');
   const [destination, setDestination] = useState<any>();
   const [selectedCoord, setSelectedCoord] = useState<Coordinate>();
 
@@ -150,20 +162,51 @@ const MapProvider = ({ children }: IMapProviderProps) => {
     setIsLoadingMap(false);
   }, []);
 
-  const handlePathGenerator = async () => {
+  const handlePathGenerator =async() => {
     // const pathLayer = await bSplineLineLayerGenerator(source, destination);
     // if (map) {
     //   console.log("PATH LAYER");
     //   map.addLayer(pathLayer);
     // }
-    await plotPointsIndividually(source, destination, map, setLayerLoading);
+    // console.log(transform(selectedPointsArray[0], "EPSG:3857", "EPSG:4326"));
+    // selectedPointsArray[0]
+    setSource(selectedPointsArray[0].join(', '));
+    setDestination(selectedPointsArray[1].join(', '));
+    
+    console.log(selectedPointsArray[0].join(', '));
+    console.log(selectedPointsArray[1].join(', '));
+    console.log(source);
+    // console.log(typeof selectedPointsArray[0])
+    await plotPointsIndividually(selectedPointsArray[0].join(', '),selectedPointsArray[1].join(', '), map, setLayerLoading);
   };
+
+  // const handlePointMarking = async (source: Array<any>,
+  //   destination: Array<any>,) => {
+  //   await pointPlotter(source, destination, map);
+  // }
 
   const handleRemoveCurrentRoute = () => {
     if (map) {
       removeLayer(map, "pointLayer");
     }
   };
+
+  const getClickedPixelCoordinates = (pixel: Pixel) => {
+    // check if pixel and mapRef.current are defined
+    if (pixel && mapRef.current) {
+      const coord = mapRef.current.getCoordinateFromPixel(pixel);
+
+      if (coord) {
+        const transformedCoord = transform(coord, "EPSG:3857", "EPSG:4326");
+        return transformedCoord;
+      }
+    }
+
+    return null;
+  };
+
+
+
 
   const handleMapClick = (event: any) => {
     const coord = mapRef.current?.getCoordinateFromPixel(event.pixel);
@@ -418,6 +461,7 @@ const MapProvider = ({ children }: IMapProviderProps) => {
         setSource,
         setFeatures,
         setShowWind,
+        getClickedPixelCoordinates,
         handleSearch,
         setIsSearched,
         handleMapClick,
@@ -428,6 +472,7 @@ const MapProvider = ({ children }: IMapProviderProps) => {
         setSelectedCoord,
         setShowBathymetry,
         handlePathGenerator,
+        
         setLayerModalIsOpen,
         handleRemoveCurrentRoute,
       }}
@@ -438,3 +483,7 @@ const MapProvider = ({ children }: IMapProviderProps) => {
 };
 
 export default MapProvider;
+function isPointSelected(coordinates: Coordinate | null) {
+  throw new Error("Function not implemented.");
+}
+
