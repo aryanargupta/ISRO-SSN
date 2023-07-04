@@ -6,6 +6,7 @@ import VectorSource from "ol/source/Vector";
 import { Fill, Stroke, Style } from "ol/style";
 import CircleStyle from "ol/style/Circle";
 import axiosInstance from "../services/axiosInstance";
+import LineString from "ol/geom/LineString";
 
 export const plotPointsIndividually = async (
   source: string,
@@ -27,29 +28,60 @@ export const plotPointsIndividually = async (
     ntype: 1,
   });
   const points = res.data;
-  
-  points.forEach((point: number[]) => {
-    const pointFeature = new Feature({
-      geometry: new Point(fromLonLat([point[1], point[0]])),
-      name: "Point",
-    });
-    const pointVectorSource = new VectorSource({
-      features: [pointFeature],
-      wrapX: false,
-    });
-    const pointVectorLayer = new VectorLayer({
-      source: pointVectorSource,
-      style: new Style({
-        image: new CircleStyle({
-          radius: 4,
-          fill: new Fill({ color: "red" }),
-          stroke: new Stroke({ color: "black", width: 1 }),
-        }),
-      }),
-    });
-    // how to name this layer
-    pointVectorLayer.set("name", "pointLayer");
-    map.addLayer(pointVectorLayer);
-    setLoading(false);
+
+  // Create an array of coordinates
+  const coordinates = points.map((point: number[]) =>
+    fromLonLat([point[1], point[0]])
+  );
+
+  // Apply smoothing by averaging neighboring coordinates
+  const smoothedCoordinates = [];
+  const smoothingFactor = 0.5; // Adjust this value to control the smoothing level
+
+  for (let i = 0; i < coordinates.length; i++) {
+    if (i === 0 || i === coordinates.length - 1) {
+      smoothedCoordinates.push(coordinates[i]);
+    } else {
+      const smoothedX = (1 - smoothingFactor) * coordinates[i][0] +
+        smoothingFactor * (coordinates[i - 1][0] + coordinates[i + 1][0]) / 2;
+      const smoothedY = (1 - smoothingFactor) * coordinates[i][1] +
+        smoothingFactor * (coordinates[i - 1][1] + coordinates[i + 1][1]) / 2;
+      smoothedCoordinates.push([smoothedX, smoothedY]);
+    }
+  }
+
+  // Create a LineString geometry from the smoothed coordinates
+  const lineString = new LineString(smoothedCoordinates);
+
+  // Create a feature with the LineString geometry
+  const lineFeature = new Feature({
+    geometry: lineString,
+    name: "Line",
   });
+
+  // Create a vector source and add the feature
+  const lineVectorSource = new VectorSource({
+    features: [lineFeature],
+    wrapX: false,
+  });
+
+  // Create a style for the line
+  const lineStyle = new Style({
+    stroke: new Stroke({
+      color: "red",
+      width: 2,
+    }),
+  });
+
+  // Create a vector layer with the vector source and style
+  const lineVectorLayer = new VectorLayer({
+    source: lineVectorSource,
+    style: lineStyle,
+  });
+
+  lineVectorLayer.set("name", "lineLayer");
+  // Add the line vector layer to the map
+  map.addLayer(lineVectorLayer);
+
+  setLoading(false);
 };

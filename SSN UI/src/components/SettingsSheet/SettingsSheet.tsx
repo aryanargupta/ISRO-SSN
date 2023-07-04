@@ -1,6 +1,6 @@
 import { IonCheckbox, IonContent, IonModal, IonSearchbar } from "@ionic/react";
 import { Coordinate, toStringXY } from "ol/coordinate";
-import { useContext, useRef } from "react";
+import { useContext, useRef, useEffect } from "react";
 import { MapContext } from "../../store/MapContext";
 
 const SettingsSheet = () => {
@@ -15,8 +15,18 @@ const SettingsSheet = () => {
     }`;
   };
 
+  const reverseCoordinates = (coordinate: Coordinate) => {
+    if (coordinate) {
+      const coordString = toStringXY(coordinate, 4);
+      const [a, b] = coordString.split(", ");
+      return `${b}, ${a}`;
+    }
+    return "";
+  };
+
   const {
     selectedCoord,
+    handleMapClick,
     handlePathGenerator,
     handleSearch,
     layerLoading,
@@ -27,7 +37,25 @@ const SettingsSheet = () => {
     showBathymetry,
     showWind,
     handleRemoveCurrentRoute,
+    clickedCoordinates,
   } = useContext(MapContext);
+
+  const lastClickedCoordinate = clickedCoordinates[clickedCoordinates.length - 1];
+  const secondLastClickedCoordinate = clickedCoordinates[clickedCoordinates.length - 2];
+
+  const lastClickedCoordinateReversed = reverseCoordinates(lastClickedCoordinate);
+  const secondLastClickedCoordinateReversed = reverseCoordinates(secondLastClickedCoordinate);
+
+  useEffect(() => {
+    if (secondLastClickedCoordinateReversed) {
+      console.log('second last clicked: ' + secondLastClickedCoordinate);
+      setSource(secondLastClickedCoordinateReversed);
+    }
+    if (lastClickedCoordinateReversed) {
+      console.log('last clicked: ' + lastClickedCoordinate);
+      setDestination(lastClickedCoordinateReversed);
+    }
+  }, [lastClickedCoordinateReversed, secondLastClickedCoordinateReversed]);
 
   return (
     <IonModal
@@ -47,7 +75,7 @@ const SettingsSheet = () => {
               <div className="cord-container">
                 <span className="inline-title">Coordinate</span>
                 <span className="text">
-                  {selectedCoord ? getYX(selectedCoord) : ""}
+                  {selectedCoord ? getYX(lastClickedCoordinate) : ""}
                 </span>
               </div>
               <div className="divider" />
@@ -84,6 +112,7 @@ const SettingsSheet = () => {
             <input
               type="text"
               placeholder="Source Coordinates"
+              defaultValue = {lastClickedCoordinateReversed ? lastClickedCoordinateReversed : ""}
               onChange={(e) => {
                 setSource(e.target.value);
               }}
@@ -93,6 +122,7 @@ const SettingsSheet = () => {
             <input
               type="text"
               placeholder="Destination Coordinates"
+              defaultValue = {secondLastClickedCoordinateReversed ? secondLastClickedCoordinateReversed : ""}
               onChange={(e) => {
                 setDestination(e.target.value);
               }}

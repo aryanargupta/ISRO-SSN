@@ -56,6 +56,7 @@ interface IMapContextType {
   setIsLoadingMap: React.Dispatch<React.SetStateAction<boolean>>;
   layerModalIsOpen: boolean;
   setLayerModalIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  clickedCoordinates: Coordinate[];
 }
 
 export const MapContext = createContext<IMapContextType>({
@@ -93,6 +94,7 @@ export const MapContext = createContext<IMapContextType>({
   handleRemoveCurrentRoute: () => {},
   handleSearch: () => Promise.resolve(),
   handlePathGenerator: () => Promise.resolve(),
+  clickedCoordinates: [],
 });
 
 interface IMapProviderProps {
@@ -100,6 +102,7 @@ interface IMapProviderProps {
 }
 
 const MapProvider = ({ children }: IMapProviderProps) => {
+  const [clickedCoordinates, setClickedCoordinates] = useState<Coordinate[]>([]);
   const [features, setFeatures] = useState<ol.Feature<Geometry>[]>([]);
 
   const [showWind, setShowWind] = useState<boolean>(false);
@@ -161,7 +164,8 @@ const MapProvider = ({ children }: IMapProviderProps) => {
 
   const handleRemoveCurrentRoute = () => {
     if (map) {
-      removeLayer(map, "pointLayer");
+      // console.log('hi');
+      removeLayer(map, "lineLayer");
     }
   };
 
@@ -207,8 +211,15 @@ const MapProvider = ({ children }: IMapProviderProps) => {
     if (coord) {
       const transformedCoord = transform(coord, "EPSG:3857", "EPSG:4326");
       setSelectedCoord(transformedCoord);
+      console.log(transformedCoord);
+      setClickedCoordinates((prevCoordinates) => [...prevCoordinates, transformedCoord]);
     }
   };
+  useEffect(() => {
+    console.log("Clicked Coordinates: ", clickedCoordinates);
+    console.log("Latest Clicked Coordinate: ", clickedCoordinates[clickedCoordinates.length - 1]);
+    console.log("Previous Clicked Coordinate: ", clickedCoordinates[clickedCoordinates.length - 2]);
+  }, [clickedCoordinates]);
 
   const handleSearch = async () => {
     const windLayer = await windLayerGenerator({
@@ -413,6 +424,7 @@ const MapProvider = ({ children }: IMapProviderProps) => {
         featuresLayer,
         showBathymetry,
         layerModalIsOpen,
+        clickedCoordinates,
         setMap,
         setBegin,
         setSource,
